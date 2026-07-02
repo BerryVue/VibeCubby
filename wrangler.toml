@@ -1,0 +1,42 @@
+name = "vibecubby"
+main = "src/worker.js"
+compatibility_date = "2026-07-01"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = true
+
+# Static apps published to your shelf live in apps/ and are served
+# at /<slug>/ alongside the Worker.
+[assets]
+directory = "./apps"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vibecubby"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# ---------------------------------------------------------------------------
+# Example of a personal environment with a custom domain. Deploy with:
+#   npx wrangler deploy --env jonathan
+# ---------------------------------------------------------------------------
+[env.jonathan]
+name = "berry-personal-cloud"
+workers_dev = false
+
+[env.jonathan.assets]
+directory = "./apps"
+
+[[env.jonathan.routes]]
+pattern = "jonathan.vibecubby.com"
+custom_domain = true
+
+[[env.jonathan.routes]]
+pattern = "jon.vibecubby.com"
+custom_domain = true
+
+[[env.jonathan.d1_databases]]
+binding = "DB"
+database_name = "berry_personal_cloud"
+database_id = "d9f9c50d-d1df-45fb-a1a8-ae269d6e6489"

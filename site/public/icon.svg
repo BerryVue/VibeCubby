@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="VibeCubby">
+  <rect width="256" height="256" rx="56" fill="#ff2e88"/>
+  <rect x="36" y="36" width="184" height="184" rx="22" fill="#fff9ec"/>
+  <path d="M128 44v168M44 128h168" stroke="#ff2e88" stroke-width="12"/>
+  <path d="M82 100c-11-9-22-17-22-27a12 12 0 0 1 22-6 12 12 0 0 1 22 6c0 10-11 18-22 27z" fill="#ff2e88"/>
+  <path d="M174 58l7 17 17 7-17 7-7 17-7-17-17-7 17-7z" fill="#2f34ff"/>
+  <rect x="62" y="156" width="38" height="38" rx="10" transform="rotate(-8 81 175)" fill="#ffd500"/>
+  <circle cx="174" cy="175" r="19" fill="#ff2e88"/>
+  <circle cx="174" cy="175" r="7" fill="#fff9ec"/>
+</svg>

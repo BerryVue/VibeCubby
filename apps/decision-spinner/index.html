@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Spinner</title>
+<meta name="description" content="Can't decide? Let the wheel do it. A tiny VibeCubby example app.">
+<meta name="theme-color" content="#fffdf4">
+<style>
+  :root { --ink: #131313; --paper: #fffdf4; --pink: #ff2e88; --cobalt: #2f34ff; --butter: #ffd500; --lime: #b8e92e; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink);
+    font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    display: grid; place-items: center; padding: 24px;
+  }
+  .card {
+    width: min(460px, 100%); border: 2.5px solid var(--ink); border-radius: 16px;
+    background: #fff; box-shadow: 6px 6px 0 var(--ink); padding: 26px; text-align: center;
+  }
+  h1 { margin: 0 0 4px; font-size: 26px; font-weight: 900; }
+  h1 span { background: linear-gradient(transparent 60%, var(--butter) 60%, var(--butter) 94%, transparent 94%); }
+  .sub { margin: 0 0 20px; color: #5d5d5d; font-size: 14px; }
+  .wheel-wrap { position: relative; width: 260px; margin: 0 auto 20px; }
+  .pointer {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%); z-index: 2;
+    width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 22px solid var(--ink);
+  }
+  svg.wheel { width: 260px; height: 260px; border-radius: 50%; border: 2.5px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); display: block; }
+  .spin-group { transition: transform 3.6s cubic-bezier(0.12, 0.62, 0.06, 1); transform-origin: 130px 130px; }
+  textarea {
+    width: 100%; min-height: 84px; border: 2.5px solid var(--ink); border-radius: 10px;
+    font: inherit; font-size: 14px; padding: 10px 12px; resize: vertical; background: var(--paper);
+  }
+  button {
+    margin-top: 14px; width: 100%; padding: 14px; font: inherit; font-weight: 900; font-size: 17px;
+    background: var(--pink); color: #fff; border: 2.5px solid var(--ink); border-radius: 12px;
+    box-shadow: 3px 3px 0 var(--ink); cursor: pointer;
+  }
+  button:active { transform: translate(3px, 3px); box-shadow: none; }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  .result { min-height: 34px; margin-top: 16px; font-size: 21px; font-weight: 900; }
+  .result strong { background: linear-gradient(transparent 55%, var(--lime) 55%, var(--lime) 95%, transparent 95%); }
+  .foot { margin-top: 14px; font-size: 11.5px; color: #8a8a8a; }
+  .foot a { color: inherit; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1><span>Decision Spinner</span></h1>
+    <p class="sub">Can't decide? The wheel is never wrong.</p>
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <svg class="wheel" viewBox="0 0 260 260" id="wheel"><g class="spin-group" id="spin-group"></g></svg>
+    </div>
+    <textarea id="options" placeholder="One option per line">Pizza night
+Taco night
+Pasta night
+Breakfast for dinner
+Leftovers, be honest</textarea>
+    <button id="spin" type="button">SPIN IT</button>
+    <p class="result" id="result" role="status" aria-live="polite"></p>
+    <p class="foot">a tiny example app that lives on a <a href="/">VibeCubby shelf</a></p>
+  </main>
+
+<script>
+  var COLORS = ["#ff2e88", "#2f34ff", "#ffd500", "#b8e92e", "#ff6b2b", "#43e0ff", "#9d8cff", "#28c840"];
+  var group = document.getElementById("spin-group");
+  var textarea = document.getElementById("options");
+  var spinButton = document.getElementById("spin");
+  var result = document.getElementById("result");
+  var rotation = 0;
+  var options = [];
+
+  draw();
+  textarea.addEventListener("input", draw);
+  spinButton.addEventListener("click", spin);
+
+  function readOptions() {
+    return textarea.value.split("\n").map(function(line) { return line.trim(); }).filter(Boolean).slice(0, 12);
+  }
+
+  function draw() {
+    options = readOptions();
+    var count = Math.max(options.length, 1);
+    var slice = 360 / count;
+    var parts = [];
+    for (var index = 0; index < count; index += 1) {
+      var start = index * slice;
+      parts.push('<path d="' + arcPath(130, 130, 128, start, start + slice) + '" fill="' + COLORS[index % COLORS.length] + '" stroke="#131313" stroke-width="2"/>');
+      var mid = (start + slice / 2) * Math.PI / 180;
+      var label = (options[index] || "add options").slice(0, 14);
+      var x = 130 + Math.sin(mid) * 78;
+      var y = 130 - Math.cos(mid) * 78;
+      parts.push('<text x="' + x + '" y="' + y + '" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#131313" transform="rotate(' + (start + slice / 2) + ' ' + x + ' ' + y + ')">' + escapeHtml(label) + '</text>');
+    }
+    parts.push('<circle cx="130" cy="130" r="17" fill="#fffdf4" stroke="#131313" stroke-width="2.5"/>');
+    group.innerHTML = parts.join("");
+  }
+
+  function spin() {
+    options = readOptions();
+    if (!options.length) { result.textContent = "Add some options first!"; return; }
+    spinButton.disabled = true;
+    result.textContent = "";
+    var winnerIndex = Math.floor(Math.random() * options.length);
+    var slice = 360 / options.length;
+    var winnerAngle = winnerIndex * slice + slice / 2;
+    var target = 360 * (4 + Math.floor(Math.random() * 3)) - winnerAngle + (Math.random() - 0.5) * slice * 0.6;
+    rotation += target - (rotation % 360);
+    group.style.transform = "rotate(" + rotation + "deg)";
+    setTimeout(function() {
+      result.innerHTML = "🎉 <strong>" + escapeHtml(options[winnerIndex]) + "</strong>";
+      spinButton.disabled = false;
+    }, 3700);
+  }
+
+  function arcPath(cx, cy, r, startDeg, endDeg) {
+    var start = polar(cx, cy, r, startDeg);
+    var end = polar(cx, cy, r, endDeg);
+    var large = endDeg - startDeg > 180 ? 1 : 0;
+    return "M " + cx + " " + cy + " L " + start.x + " " + start.y + " A " + r + " " + r + " 0 " + large + " 1 " + end.x + " " + end.y + " Z";
+  }
+
+  function polar(cx, cy, r, deg) {
+    var rad = (deg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+</script>
+</body>
+</html>

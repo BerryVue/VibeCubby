@@ -1,0 +1,7 @@
+node_modules/
+.wrangler/
+.dev.vars
+.DS_Store
+
+# Your cubby's personality stays yours. The example ships instead.
+vibecubby.config.json

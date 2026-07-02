@@ -1,0 +1,27 @@
+{
+  "cubbyName": "My Cubby",
+  "shortName": "Cubby",
+  "tagline": "Homemade apps, living on my own shelf",
+  "owner": "You",
+  "members": ["You", "Partner"],
+  "theme": "hearth",
+  "redirects": {},
+  "categories": ["Produce", "Refrigerated", "Frozen", "Pantry", "Household", "Baby", "Pet", "Other"],
+  "apps": [
+    {
+      "id": "family-pantry",
+      "name": "Family Pantry",
+      "slug": "family-pantry",
+      "path": "/pantry",
+      "url": "/pantry",
+      "category": "Household",
+      "runtime": "Cloudflare Worker",
+      "visibility": "private",
+      "status": "live",
+      "accent": "#315f4f",
+      "icon": "pantry",
+      "notes": "Shared grocery and pantry checklist.",
+      "sortOrder": 10
+    }
+  ]
+}

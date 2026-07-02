@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VibeCubby — a cozy corner of the internet for the apps you make</title>
+<meta name="description" content="VibeCubby is a self-hosted shelf for your homemade apps. Vibe-code something in Claude Code or Codex, say 'publish this to my cubby', and it's live on your own domain — for you, your people, or the world.">
+<meta property="og:title" content="VibeCubby — your apps deserve a home, not a localhost">
+<meta property="og:description" content="A self-hosted shelf for homemade apps. Publish from any AI agent. Runs on your own Cloudflare account, free.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibecubby.com">
+<meta name="theme-color" content="#fff9ec">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fff9ec;
+    --card: #fffefa;
+    --ink: #16130e;
+    --muted: #6b6357;
+    --pink: #ff2e88;
+    --cobalt: #2f34ff;
+    --lime: #b8e92e;
+    --tangerine: #ff6b2b;
+    --butter: #ffd500;
+    --border: 2.5px solid var(--ink);
+    --shadow: 6px 6px 0 var(--ink);
+    --shadow-sm: 3px 3px 0 var(--ink);
+    --display: "Bricolage Grotesque", "Avenir Next", sans-serif;
+    --body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --mono: "Space Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--body); font-size: 17px; line-height: 1.55;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 99; pointer-events: none; opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection { background: var(--butter); }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--display); line-height: 1.04; margin: 0; letter-spacing: -0.02em; }
+  p { margin: 0; }
+  .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+
+  /* ---------- top bar ---------- */
+  .top {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--paper); border-bottom: var(--border);
+  }
+  .top-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; }
+  .wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-weight: 800; font-size: 21px; }
+  .wordmark svg { width: 34px; height: 34px; }
+  .top-links { display: flex; align-items: center; gap: 20px; font-weight: 500; font-size: 15px; }
+  .top-links a { text-decoration: none; }
+  .top-links a:not(.btn):hover { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--pink); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px;
+    font-family: var(--display); font-weight: 800; font-size: 16px; text-decoration: none;
+    background: var(--ink); color: var(--paper); border: var(--border); border-radius: 12px;
+    box-shadow: var(--shadow-sm); transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+  .btn.pink { background: var(--pink); color: #fff; }
+  .btn.ghost { background: var(--card); color: var(--ink); }
+  @media (max-width: 720px) { .top-links a.hide-m { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding: 72px 0 40px; }
+  .kicker {
+    display: inline-block; font-family: var(--mono); font-size: 13px; font-weight: 700;
+    background: var(--lime); border: var(--border); border-radius: 999px; padding: 6px 14px;
+    box-shadow: var(--shadow-sm); transform: rotate(-1.2deg); margin-bottom: 26px;
+  }
+  .hero h1 { font-size: clamp(44px, 7.4vw, 88px); font-weight: 800; max-width: 11ch; }
+  .hero h1 .pink-swipe { background: linear-gradient(transparent 58%, var(--pink) 58%, var(--pink) 96%, transparent 96%); }
+  .hero h1 .cobalt { color: var(--cobalt); font-style: italic; }
+  .hero .sub { max-width: 56ch; margin-top: 26px; font-size: clamp(17px, 2vw, 20px); color: var(--muted); }
+  .hero .sub strong { color: var(--ink); }
+  .hero-cta { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+  .sticker { position: absolute; pointer-events: none; }
+  .sticker.star { top: 88px; right: 6%; width: 74px; transform: rotate(12deg); }
+  .sticker.heart { bottom: 130px; right: 16%; width: 56px; transform: rotate(-9deg); }
+  .sticker.smile { top: 240px; right: 26%; width: 62px; transform: rotate(6deg); }
+  @media (max-width: 900px) { .sticker { display: none; } }
+
+  /* ---------- shelf mock ---------- */
+  .shelf-mock { margin: 56px 0 0; border: var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+  .mock-chrome { display: flex; align-items: center; gap: 8px; border-bottom: var(--border); padding: 11px 16px; background: var(--butter); }
+  .mock-chrome i { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--ink); background: var(--card); }
+  .mock-chrome .url { margin-left: 10px; font-family: var(--mono); font-size: 13px; font-weight: 700; background: var(--card); border: 2px solid var(--ink); border-radius: 8px; padding: 4px 12px; }
+  .mock-body { padding: 26px clamp(16px, 3vw, 30px) 30px; }
+  .mock-owner { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; }
+  .mock-face { width: 48px; height: 48px; border-radius: 14px; border: var(--border); background: var(--tangerine); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 22px; color: #fff; }
+  .mock-owner strong { font-family: var(--display); font-size: 20px; display: block; }
+  .mock-owner span { color: var(--muted); font-size: 14px; }
+  .mock-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .mock-app { border: var(--border); border-radius: 13px; background: var(--card); padding: 14px; box-shadow: var(--shadow-sm); transition: transform 140ms ease; }
+  .mock-app:hover { transform: translateY(-4px) rotate(0deg) !important; }
+  .mock-app:nth-child(1) { transform: rotate(-1deg); }
+  .mock-app:nth-child(2) { transform: rotate(0.8deg); }
+  .mock-app:nth-child(3) { transform: rotate(-0.6deg); }
+  .mock-app:nth-child(4) { transform: rotate(1.1deg); }
+  .mock-ico { width: 40px; height: 40px; border-radius: 11px; border: 2.5px solid var(--ink); display: grid; place-items: center; font-size: 20px; margin-bottom: 10px; }
+  .mock-app strong { font-family: var(--display); font-size: 15px; display: block; }
+  .mock-app span { font-size: 12.5px; color: var(--muted); display: block; margin-top: 3px; }
+  .mock-tag { display: inline-block; margin-top: 10px; font-family: var(--mono); font-size: 11px; font-weight: 700; border: 2px solid var(--ink); border-radius: 999px; padding: 2px 9px; }
+  @media (max-width: 900px) { .mock-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .mock-grid { grid-template-columns: 1fr; } }
+
+  /* ---------- ticker ---------- */
+  .ticker { margin-top: 72px; border-top: var(--border); border-bottom: var(--border); background: var(--pink); color: #fff; overflow: hidden; }
+  .ticker-track { display: flex; gap: 0; white-space: nowrap; padding: 12px 0; font-family: var(--display); font-weight: 800; font-size: 17px; animation: slide 26s linear infinite; width: max-content; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  .ticker-track span { padding: 0 14px; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }
+
+  /* ---------- sections ---------- */
+  section { padding: 84px 0 0; }
+  .sec-kick { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--cobalt); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 14px; }
+  .sec-title { font-size: clamp(30px, 4.4vw, 52px); font-weight: 800; max-width: 22ch; }
+  .sec-sub { color: var(--muted); max-width: 60ch; margin-top: 16px; font-size: 18px; }
+
+  .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 44px; }
+  .why-card { border: var(--border); border-radius: 16px; background: var(--card); padding: 22px; box-shadow: var(--shadow-sm); }
+  .why-card:nth-child(1) { transform: rotate(-0.7deg); background: #fff3f9; }
+  .why-card:nth-child(2) { transform: rotate(0.5deg); background: #f2f3ff; }
+  .why-card:nth-child(3) { transform: rotate(-0.4deg); background: #f7ffe0; }
+  .why-card:nth-child(4) { transform: rotate(0.8deg); background: #fff4e8; }
+  .why-card .emoji { font-size: 30px; display: block; margin-bottom: 12px; }
+  .why-card h3 { font-size: 19px; margin-bottom: 8px; }
+  .why-card p { font-size: 14.5px; color: var(--muted); }
+  @media (max-width: 900px) { .why-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .why-grid { grid-template-columns: 1fr; } }
+
+  /* ---------- terminal ---------- */
+  .money { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 44px; align-items: center; margin-top: 44px; }
+  @media (max-width: 900px) { .money { grid-template-columns: 1fr; } }
+  .term { border: var(--border); border-radius: 16px; background: #17141c; color: #efe9ff; box-shadow: var(--shadow); overflow: hidden; font-family: var(--mono); font-size: 14.5px; }
+  .term-bar { display: flex; gap: 7px; padding: 12px 16px; border-bottom: 2.5px solid #000; background: #241f2e; }
+  .term-bar i { width: 12px; height: 12px; border-radius: 50%; }
+  .term-bar i:nth-child(1) { background: #ff5f57; } .term-bar i:nth-child(2) { background: #febc2e; } .term-bar i:nth-child(3) { background: #28c840; }
+  .term-body { padding: 20px 22px 26px; min-height: 168px; }
+  .term-line { display: block; margin-bottom: 10px; }
+  .term-line .who { color: #9d8cff; font-weight: 700; }
+  .term-line.you .who { color: var(--lime); }
+  .term-line .ok { color: #5df29a; font-weight: 700; }
+  .term-line a { color: #7dd7ff; }
+  .type { overflow: hidden; white-space: nowrap; display: inline-block; vertical-align: bottom; max-width: 100%; }
+  .caret { display: inline-block; width: 9px; height: 18px; background: var(--lime); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .money-copy h3 { font-size: clamp(26px, 3.2vw, 38px); }
+  .money-copy p { color: var(--muted); margin-top: 16px; max-width: 46ch; }
+  .money-copy .mini { font-family: var(--mono); font-size: 13px; margin-top: 22px; background: var(--card); border: 2px solid var(--ink); border-radius: 10px; padding: 12px 15px; display: inline-block; box-shadow: var(--shadow-sm); }
+
+  /* ---------- themes ---------- */
+  .themes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; }
+  @media (max-width: 800px) { .themes-grid { grid-template-columns: 1fr; } }
+  .theme-card { border: var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); background: var(--card); transition: transform 140ms ease; }
+  .theme-card:hover { transform: translateY(-5px); }
+  .theme-view { height: 148px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+  .theme-view .bar { height: 13px; border-radius: 7px; width: 62%; }
+  .theme-view .row { display: flex; gap: 8px; }
+  .theme-view .tile { flex: 1; height: 54px; border-radius: 9px; }
+  .theme-label { border-top: var(--border); padding: 13px 16px; }
+  .theme-label strong { font-family: var(--display); font-size: 17px; }
+  .theme-label span { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  .t-hearth { background: #f7f1e5; }
+  .t-hearth .bar { background: #2b241c; }
+  .t-hearth .tile { background: #fffdf7; border: 1.5px solid #e0d5c1; }
+  .t-hearth .tile:first-child { background: #b5482a; }
+  .t-arcade { background: #0e1016; }
+  .t-arcade .bar { background: #a3ff3f; box-shadow: 0 0 14px rgba(163,255,63,.5); }
+  .t-arcade .tile { background: #161b28; border: 1.5px solid #262e42; }
+  .t-arcade .tile:last-child { background: #43e0ff; }
+  .t-zine { background: #fffdf4; }
+  .t-zine .bar { background: #ff2e88; }
+  .t-zine .tile { background: #fff; border: 2.5px solid #131313; box-shadow: 3px 3px 0 #131313; }
+  .t-zine .tile:nth-child(2) { background: #ffd500; transform: rotate(-2deg); }
+
+  /* ---------- quickstart ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; counter-reset: step; }
+  @media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+  .step { border: var(--border); border-radius: 16px; background: var(--card); padding: 22px; box-shadow: var(--shadow-sm); position: relative; }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; top: -18px; left: 18px; width: 38px; height: 38px;
+    display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 19px;
+    background: var(--butter); border: var(--border); border-radius: 50%;
+  }
+  .step h3 { font-size: 18px; margin: 10px 0 8px; }
+  .step p { font-size: 14.5px; color: var(--muted); }
+  .code {
+    margin-top: 30px; border: var(--border); border-radius: 14px; background: #17141c; color: #d9ffb3;
+    font-family: var(--mono); font-size: 14px; padding: 20px 22px; overflow-x: auto; box-shadow: var(--shadow);
+  }
+  .code .c { color: #8a7fa8; }
+
+  /* ---------- honest ---------- */
+  .honest { border: var(--border); border-radius: 18px; background: #f2f3ff; box-shadow: var(--shadow); padding: clamp(24px, 4vw, 44px); margin-top: 44px; transform: rotate(-0.3deg); }
+  .honest h3 { font-size: clamp(22px, 2.8vw, 30px); }
+  .honest p { margin-top: 14px; max-width: 72ch; color: #3d3a52; }
+  .honest strong { color: var(--ink); }
+
+  /* ---------- roadmap ---------- */
+  .maybes { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+  .maybe { font-family: var(--mono); font-weight: 700; font-size: 14px; border: 2px solid var(--ink); border-radius: 999px; padding: 8px 16px; background: var(--card); box-shadow: var(--shadow-sm); }
+  .maybe:nth-child(odd) { transform: rotate(-1deg); }
+  .maybe:nth-child(even) { transform: rotate(1deg); background: var(--lime); }
+
+  /* ---------- footer ---------- */
+  footer { margin-top: 96px; border-top: var(--border); background: var(--ink); color: var(--paper); }
+  .foot-in { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 30px 0; flex-wrap: wrap; }
+  .foot-in a { color: var(--paper); }
+  .webring { font-family: var(--mono); font-size: 13px; opacity: 0.75; }
+  .guestbook { font-size: 14.5px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="wordmark" href="/">
+      <svg viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#ff2e88"/><rect x="36" y="36" width="184" height="184" rx="22" fill="#fff9ec"/><path d="M128 44v168M44 128h168" stroke="#ff2e88" stroke-width="12"/><path d="M82 100c-11-9-22-17-22-27a12 12 0 0 1 22-6 12 12 0 0 1 22 6c0 10-11 18-22 27z" fill="#ff2e88"/><path d="M174 58l7 17 17 7-17 7-7 17-7-17-17-7 17-7z" fill="#2f34ff"/><rect x="62" y="156" width="38" height="38" rx="10" transform="rotate(-8 81 175)" fill="#ffd500"/><circle cx="174" cy="175" r="19" fill="#ff2e88"/><circle cx="174" cy="175" r="7" fill="#fff9ec"/></svg>
+      VibeCubby
+    </a>
+    <nav class="top-links">
+      <a href="#why" class="hide-m">why</a>
+      <a href="#publish" class="hide-m">the magic</a>
+      <a href="#themes" class="hide-m">themes</a>
+      <a href="#get-started" class="btn pink">Build your cubby</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap" style="padding-top:72px">
+    <svg class="sticker star" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4l11 30 32 3-25 21 8 32-26-18-26 18 8-32L7 37l32-3z" fill="#ffd500" stroke="#16130e" stroke-width="5"/></svg>
+    <svg class="sticker heart" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 88C30 70 10 55 10 35a22 22 0 0 1 40-12 22 22 0 0 1 40 12c0 20-20 35-40 53z" fill="#ff2e88" stroke="#16130e" stroke-width="5"/></svg>
+    <svg class="sticker smile" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" fill="#b8e92e" stroke="#16130e" stroke-width="5"/><circle cx="36" cy="42" r="5" fill="#16130e"/><circle cx="64" cy="42" r="5" fill="#16130e"/><path d="M32 60c10 12 26 12 36 0" stroke="#16130e" stroke-width="5" fill="none" stroke-linecap="round"/></svg>
+
+    <span class="kicker">// the missing last step of vibe coding</span>
+    <h1>Your apps deserve a <span class="pink-swipe">home</span>, not a <span class="cobalt">localhost</span>.</h1>
+    <p class="sub">VibeCubby is a <strong>self-hosted shelf for your homemade apps</strong>. Vibe-code something useful in Claude Code, Codex, or Cursor — then say <strong>"publish this to my cubby"</strong> and it's live on your own domain. For you, your family, or the whole internet. No domains to buy per idea, no auth to wire, no deploy pipeline to cry over.</p>
+    <div class="hero-cta">
+      <a class="btn pink" href="#get-started">Build your cubby — it's free</a>
+      <a class="btn ghost" href="https://jonathan.vibecubby.com" target="_blank" rel="noopener">Knock on a real cubby →</a>
+    </div>
+
+    <div class="shelf-mock" aria-hidden="true">
+      <div class="mock-chrome"><i></i><i></i><i></i><span class="url">jonathan.vibecubby.com</span></div>
+      <div class="mock-body">
+        <div class="mock-owner">
+          <div class="mock-face">J</div>
+          <div><strong>Jonathan's Cubby</strong><span>homemade apps for my people · est. 2026</span></div>
+        </div>
+        <div class="mock-grid">
+          <div class="mock-app"><div class="mock-ico" style="background:#b8e92e">🥦</div><strong>Family Pantry</strong><span>shared grocery list</span><em class="mock-tag" style="background:#fff3f9">private</em></div>
+          <div class="mock-app"><div class="mock-ico" style="background:#ffd500">🎬</div><strong>Movie Night</strong><span>what are we watching?</span><em class="mock-tag" style="background:#f2f3ff">family</em></div>
+          <div class="mock-app"><div class="mock-ico" style="background:#ff9ec4">🌀</div><strong>Decision Spinner</strong><span>let the wheel decide</span><em class="mock-tag" style="background:#f7ffe0">public</em></div>
+          <div class="mock-app"><div class="mock-ico" style="background:#9be7ff">⛵</div><strong>Boat Log</strong><span>maintenance tracker</span><em class="mock-tag" style="background:#fff4e8">just me</em></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track" id="ticker">
+      <span>★ no domain to buy per idea</span><span>★ no auth to wire</span><span>★ no deploy pipeline</span><span>★ your data in your database</span><span>★ links your mom can open</span><span>★ works with any AI agent</span><span>★ glitter allowed</span>
+    </div>
+  </div>
+
+  <section id="why" class="wrap">
+    <p class="sec-kick">Why this exists</p>
+    <h2 class="sec-title">Apps can be home-cooked meals.</h2>
+    <p class="sec-sub">Not everything needs to be a startup. Sometimes you just want a grocery list that syncs with your partner's phone, or a chore wheel for the kids. AI made those apps minutes to build — and still hours to put somewhere. That's the part VibeCubby fixes.</p>
+    <div class="why-grid">
+      <div class="why-card"><span class="emoji">🏡</span><h3>Yours, actually.</h3><p>Runs on your own Cloudflare account, free tier. Your data lives in your database. Export everything, always. Nobody can rug-pull your shelf.</p></div>
+      <div class="why-card"><span class="emoji">🤖</span><h3>Any agent.</h3><p>Publish from Claude Code, Codex, Cursor — anything that can run a command. Your cubby doesn't care which AI you're loyal to this week.</p></div>
+      <div class="why-card"><span class="emoji">👵</span><h3>For your people.</h3><p>Every app is a link your mom can open. Install to home screen like a real app. No accounts, no app store — just an optional PIN for the private stuff.</p></div>
+      <div class="why-card"><span class="emoji">🎨</span><h3>Make it YOURS.</h3><p>Full theming, MySpace rules apply: your cubby should look like you. Good design is the flex here, not clever code.</p></div>
+    </div>
+  </section>
+
+  <section id="publish" class="wrap">
+    <p class="sec-kick">The magic trick</p>
+    <h2 class="sec-title">"Publish this to my cubby."</h2>
+    <div class="money">
+      <div class="money-copy">
+        <h3>Five words. Then it's live.</h3>
+        <p>You just finished vibe-coding a chore wheel. Instead of letting it die on localhost like the last six ideas, you say the words. Your agent builds it, ships it to your Cloudflare account, and hands you a link that works on your phone, your partner's phone, and grandma's iPad.</p>
+        <p class="mini">npx vibecubby publish ./chore-wheel</p>
+      </div>
+      <div class="term" aria-hidden="true">
+        <div class="term-bar"><i></i><i></i><i></i></div>
+        <div class="term-body">
+          <span class="term-line you"><span class="who">you &gt;</span> <span class="type" id="t1"></span></span>
+          <span class="term-line"><span class="who">claude &gt;</span> <span class="type" id="t2"></span></span>
+          <span class="term-line"><span class="who">claude &gt;</span> <span class="type" id="t3"></span></span>
+          <span class="term-line" id="t4" style="visibility:hidden"><span class="ok">✓ live</span> → <a href="https://jonathan.vibecubby.com" target="_blank" rel="noopener">jonathan.vibecubby.com/chore-wheel</a>&nbsp;<span class="caret"></span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="themes" class="wrap">
+    <p class="sec-kick">Personality included</p>
+    <h2 class="sec-title">Three themes at birth. Yours to mutate.</h2>
+    <p class="sec-sub">A cubby ships with three genuinely different moods — and every color, corner, and shadow is a CSS token away from becoming something only you would make.</p>
+    <div class="themes-grid">
+      <div class="theme-card">
+        <div class="theme-view t-hearth"><div class="bar"></div><div class="row"><div class="tile"></div><div class="tile"></div><div class="tile"></div></div></div>
+        <div class="theme-label"><strong>Hearth</strong><span>warm paper &amp; terracotta — software as a home-cooked meal</span></div>
+      </div>
+      <div class="theme-card">
+        <div class="theme-view t-arcade"><div class="bar"></div><div class="row"><div class="tile"></div><div class="tile"></div><div class="tile"></div></div></div>
+        <div class="theme-label"><strong>Arcade</strong><span>dark CRT neon — for the night people</span></div>
+      </div>
+      <div class="theme-card">
+        <div class="theme-view t-zine"><div class="bar"></div><div class="row"><div class="tile"></div><div class="tile"></div><div class="tile"></div></div></div>
+        <div class="theme-label"><strong>Zine</strong><span>paper, stickers &amp; marker — full MySpace-era heart</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="get-started" class="wrap">
+    <p class="sec-kick">Quickstart</p>
+    <h2 class="sec-title">Live in about 10 minutes. $0.</h2>
+    <p class="sec-sub">All you need is a free Cloudflare account and Node 18+. Your cubby deploys to a free workers.dev URL — point your own domain at it whenever you're ready.</p>
+    <div class="steps">
+      <div class="step"><h3>Clone the cubby</h3><p>Grab the open-source repo. It's MIT licensed — it's yours now, that's the whole point.</p></div>
+      <div class="step"><h3>Run setup</h3><p>One command logs into Cloudflare, creates your database, sets your PIN, and deploys the shelf.</p></div>
+      <div class="step"><h3>Publish things</h3><p>Tell your agent "publish this to my cubby" — or run the CLI yourself. Add it to your phone's home screen.</p></div>
+    </div>
+    <div class="code">
+      <span class="c"># one cubby, coming up</span><br>
+      git clone https://github.com/REPLACE_WITH_REPO/vibecubby my-cubby<br>
+      cd my-cubby<br>
+      npm install &amp;&amp; npm run setup
+    </div>
+    <div class="honest">
+      <h3>"How is this different from Lovable / Val Town / GitHub Spark?"</h3>
+      <p>Honest answer: those are excellent <strong>builders</strong> with hosting attached — and they host your apps on <em>their</em> platform, in <em>their</em> style, tied to <em>their</em> tool. VibeCubby is the opposite bet: <strong>you bring any agent, you own the infrastructure, and the shelf is an expression of you.</strong> If you want a managed platform, use theirs — genuinely. If you want a home, build a cubby.</p>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-bottom: 20px">
+    <p class="sec-kick">Roadmap</p>
+    <h2 class="sec-title">Maybes, not promises.</h2>
+    <div class="maybes">
+      <span class="maybe">community jams</span>
+      <span class="maybe">remix lineage — "forked from Maria's grocery list"</span>
+      <span class="maybe">a public directory of cubbies</span>
+      <span class="maybe">more themes</span>
+      <span class="maybe">your idea here → open an issue</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <p class="guestbook">Made by <a href="https://berryvuestudios.com" rel="noopener">Jonathan Rosenberry</a> — a filmmaker who fell into building.<br>MIT licensed. The guestbook is the <a href="#get-started">issue tracker</a>. Be kind.</p>
+    <p class="webring">⟨ prev · <strong>the personal web lives</strong> · next ⟩</p>
+  </div>
+</footer>
+
+<script>
+  // duplicate ticker content so the loop is seamless
+  var ticker = document.getElementById("ticker");
+  ticker.innerHTML += ticker.innerHTML;
+
+  // looping typewriter for the money-shot terminal
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var lines = [
+    { el: document.getElementById("t1"), text: "publish this app to my cubby" },
+    { el: document.getElementById("t2"), text: "on it. building chore-wheel…" },
+    { el: document.getElementById("t3"), text: "deploying to your Cloudflare…" }
+  ];
+  var t4 = document.getElementById("t4");
+
+  function typeLine(line, done) {
+    var i = 0;
+    line.el.textContent = "";
+    (function tick() {
+      line.el.textContent = line.text.slice(0, i);
+      i += 1;
+      if (i <= line.text.length) { setTimeout(tick, 34); } else { setTimeout(done, 420); }
+    })();
+  }
+
+  function runLoop() {
+    if (reduced) {
+      lines.forEach(function(line) { line.el.textContent = line.text; });
+      t4.style.visibility = "visible";
+      return;
+    }
+    lines.forEach(function(line) { line.el.textContent = ""; });
+    t4.style.visibility = "hidden";
+    typeLine(lines[0], function() {
+      typeLine(lines[1], function() {
+        typeLine(lines[2], function() {
+          t4.style.visibility = "visible";
+          setTimeout(runLoop, 5200);
+        });
+      });
+    });
+  }
+  runLoop();
+</script>
+</body>
+</html>
