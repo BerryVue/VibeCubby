@@ -54,6 +54,20 @@ assert.equal((await created.json()).item.name, "Coffee");
 const health = await request("/health");
 assert.equal(health.status, 200);
 
+const pushRegister = await request("/api/push/register", {
+  method: "POST",
+  headers: { Cookie: cookie, "Content-Type": "application/json" },
+  body: JSON.stringify({ token: "ab12cd34ef56ab12cd34ef56", platform: "ios" }),
+});
+assert.equal(pushRegister.status, 201);
+
+const badPush = await request("/api/push/register", {
+  method: "POST",
+  headers: { Cookie: cookie, "Content-Type": "application/json" },
+  body: JSON.stringify({ token: "not-a-token!" }),
+});
+assert.equal(badPush.status, 400);
+
 console.log("Smoke test passed.");
 
 function request(path, init = {}) {

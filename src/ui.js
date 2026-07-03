@@ -491,8 +491,30 @@ ${theme.extra}
       }
       $("#login").classList.add("hidden");
       $("#app").classList.remove("hidden");
+      nativeBridge();
       await loadData();
       setView(state.view);
+    }
+
+    /* Inside the VibeCubby iOS companion app, window.Capacitor exists and
+       unlocks native powers. In a plain browser this does nothing. */
+    function nativeBridge() {
+      var cap = window.Capacitor;
+      if (!cap || !cap.isPluginAvailable || !cap.isPluginAvailable("PushNotifications")) return;
+      var Push = cap.Plugins.PushNotifications;
+      Push.addListener("registration", function(token) {
+        api("/api/push/register", { method: "POST", body: { token: token.value, platform: "ios" } }).catch(function() {});
+      });
+      Push.requestPermissions().then(function(result) {
+        if (result.receive === "granted") Push.register();
+      }).catch(function() {});
+    }
+
+    function buzz() {
+      var cap = window.Capacitor;
+      if (cap && cap.Plugins && cap.Plugins.Haptics) {
+        cap.Plugins.Haptics.impact({ style: "LIGHT" }).catch(function() {});
+      }
     }
 
     async function onLogin(event) {
@@ -688,6 +710,7 @@ ${theme.extra}
     async function updateItem(id, patch) {
       var response = await api("/api/pantry/items/" + encodeURIComponent(id), { method: "PATCH", body: patch });
       state.items = state.items.map(function(item) { return item.id === id ? response.item : item; });
+      buzz();
       renderApps();
       renderItems();
     }

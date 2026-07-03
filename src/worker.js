@@ -60,7 +60,7 @@ function normalizeConfig(raw) {
 let schemaReady = false;
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     const redirectTo = REDIRECTS[url.hostname.toLowerCase()];
@@ -159,7 +159,22 @@ export default {
       if (url.pathname === "/api/pantry/items" && request.method === "POST") {
         const item = normalizeItem(await request.json());
         await upsertItem(env, item);
+        notifyDevices(env, ctx, "Family Pantry", `${item.modifiedBy} added ${item.name} (${item.status}).`);
         return json({ item }, 201);
+      }
+
+      if (url.pathname === "/api/push/register" && request.method === "POST") {
+        const body = await request.json().catch(() => ({}));
+        const token = clean(body.token, 200);
+        if (!/^[0-9a-f]{16,200}$/i.test(token)) return json({ error: "Invalid device token." }, 400);
+        await run(
+          env,
+          "insert into push_devices (token, platform, created_at) values (?, ?, ?) on conflict(token) do nothing",
+          token,
+          clean(body.platform, 20) || "ios",
+          new Date().toISOString(),
+        );
+        return json({ ok: true }, 201);
       }
 
       const itemMatch = url.pathname.match(/^\/api\/pantry\/items\/([^/]+)$/);
@@ -169,6 +184,9 @@ export default {
         if (!existing) return json({ error: "Item not found." }, 404);
         const item = normalizeItem({ ...existing, ...(await request.json()), id, createdAt: existing.createdAt });
         await upsertItem(env, item);
+        if (item.status !== existing.status) {
+          notifyDevices(env, ctx, "Family Pantry", `${item.modifiedBy} marked ${item.name} ${item.status}.`);
+        }
         return json({ item });
       }
 
@@ -296,7 +314,38 @@ async function ensureDatabase(env) {
     for (const item of DEFAULT_ITEMS) await upsertItem(env, item);
   }
 
+  await run(env, `
+    create table if not exists push_devices (
+      token text primary key,
+      platform text not null default 'ios',
+      created_at text not null
+    )
+  `);
+
   schemaReady = true;
+}
+
+/* Fire-and-forget push notifications through the relay. Does nothing unless
+   PUSH_RELAY_URL is configured, so cubbies without the companion app pay
+   zero cost. */
+function notifyDevices(env, ctx, title, body) {
+  const relay = clean(env.PUSH_RELAY_URL, 200);
+  if (!relay) return;
+  const task = (async () => {
+    const rows = await all(env, "select token from push_devices");
+    await Promise.allSettled(rows.map(async (row) => {
+      const response = await fetch(relay.replace(/\/+$/, "") + "/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceToken: row.token, title, body }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (data && data.gone) {
+        await run(env, "delete from push_devices where token = ?", row.token);
+      }
+    }));
+  })().catch(() => {});
+  if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(task);
 }
 
 async function listApps(env) {

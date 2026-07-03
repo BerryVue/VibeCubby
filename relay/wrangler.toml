@@ -1,0 +1,17 @@
+name = "vibecubby-push-relay"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+workers_dev = false
+preview_urls = false
+
+[vars]
+APNS_TOPIC = "com.vibecubby.app"
+
+[[routes]]
+pattern = "relay.vibecubby.com"
+custom_domain = true
+
+# Secrets to set before this relay works (needs an Apple Developer account):
+#   npx wrangler secret put APNS_AUTH_KEY   # paste the whole .p8 file
+#   npx wrangler secret put APNS_KEY_ID
+#   npx wrangler secret put APNS_TEAM_ID

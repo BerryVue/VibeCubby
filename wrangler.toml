@@ -25,6 +25,9 @@ database_id = "REPLACE_WITH_D1_DATABASE_ID"
 name = "berry-personal-cloud"
 workers_dev = false
 
+[env.jonathan.vars]
+PUSH_RELAY_URL = "https://relay.vibecubby.com"
+
 [env.jonathan.assets]
 directory = "./apps"
 

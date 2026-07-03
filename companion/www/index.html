@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VibeCubby</title>
+<style>
+  :root { --paper: #fff9ec; --ink: #16130e; --pink: #ff2e88; --cobalt: #2f34ff; --butter: #ffd500; --lime: #b8e92e; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink);
+    font-family: "Avenir Next", "Helvetica Neue", -apple-system, sans-serif;
+    display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  }
+  .card { width: min(400px, 100%); text-align: center; }
+  .logo { width: 92px; height: 92px; margin: 0 auto 18px; display: block; }
+  h1 { font-size: 30px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h1 span { background: linear-gradient(transparent 60%, var(--butter) 60%, var(--butter) 94%, transparent 94%); }
+  .sub { color: #6b6357; font-size: 15px; margin: 0 0 30px; line-height: 1.5; }
+  label { display: block; text-align: left; font-size: 12.5px; font-weight: 700; color: #6b6357; margin-bottom: 7px; }
+  input {
+    width: 100%; font: inherit; font-size: 17px; padding: 14px 15px;
+    border: 2.5px solid var(--ink); border-radius: 12px; background: #fff; outline: none;
+  }
+  input:focus { box-shadow: 0 0 0 3px rgba(255, 46, 136, 0.25); }
+  button {
+    margin-top: 16px; width: 100%; padding: 16px; font: inherit; font-size: 17px; font-weight: 800;
+    background: var(--pink); color: #fff; border: 2.5px solid var(--ink); border-radius: 14px;
+    box-shadow: 3px 3px 0 var(--ink); cursor: pointer;
+  }
+  button:active { transform: translate(3px, 3px); box-shadow: none; }
+  button:disabled { opacity: 0.55; }
+  .error { min-height: 20px; color: #d21f1f; font-size: 13.5px; font-weight: 600; margin-top: 12px; }
+  .fine { color: #a09786; font-size: 12px; margin-top: 26px; line-height: 1.5; }
+  .fine a { color: inherit; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <svg class="logo" viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#ff2e88"/><rect x="36" y="36" width="184" height="184" rx="22" fill="#fff9ec"/><path d="M128 44v168M44 128h168" stroke="#ff2e88" stroke-width="12"/><path d="M82 100c-11-9-22-17-22-27a12 12 0 0 1 22-6 12 12 0 0 1 22 6c0 10-11 18-22 27z" fill="#ff2e88"/><path d="M174 58l7 17 17 7-17 7-7 17-7-17-17-7 17-7z" fill="#2f34ff"/><rect x="62" y="156" width="38" height="38" rx="10" transform="rotate(-8 81 175)" fill="#ffd500"/><circle cx="174" cy="175" r="19" fill="#ff2e88"/><circle cx="174" cy="175" r="7" fill="#fff9ec"/></svg>
+    <h1>Welcome <span>home</span>.</h1>
+    <p class="sub">VibeCubby connects to a cubby you (or someone you love) already runs. Enter its address to move in.</p>
+    <form id="connect-form">
+      <label for="url">Your cubby's address</label>
+      <input id="url" type="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="jonathan.vibecubby.com" required>
+      <button id="go" type="submit">Move in</button>
+      <p class="error" id="error"></p>
+    </form>
+    <p class="fine">Don't have a cubby yet? Build one free at <a href="https://vibecubby.com" target="_blank" rel="noopener">vibecubby.com</a> - it takes about 10 minutes.</p>
+  </main>
+
+<script type="module">
+  // Capacitor injects window.Capacitor at runtime; fall back to localStorage
+  // so this page also works in a plain browser for development.
+  const Preferences = window.Capacitor?.Plugins?.Preferences || {
+    async get({ key }) { return { value: localStorage.getItem(key) }; },
+    async set({ key, value }) { localStorage.setItem(key, value); },
+  };
+
+  const form = document.getElementById("connect-form");
+  const urlInput = document.getElementById("url");
+  const goButton = document.getElementById("go");
+  const errorNode = document.getElementById("error");
+
+  // Returning users go straight to their cubby.
+  const saved = await Preferences.get({ key: "cubbyUrl" });
+  if (saved.value) {
+    window.location.href = saved.value;
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorNode.textContent = "";
+    goButton.disabled = true;
+    goButton.textContent = "Knocking...";
+    try {
+      const base = normalize(urlInput.value);
+      const health = await fetch(base + "/health", { signal: AbortSignal.timeout(8000) }).then((r) => r.json());
+      if (!health || health.platform !== "VibeCubby") {
+        throw new Error("That address answered, but it doesn't look like a cubby.");
+      }
+      await Preferences.set({ key: "cubbyUrl", value: base + "/" });
+      window.location.href = base + "/";
+    } catch (error) {
+      errorNode.textContent = friendly(error);
+      goButton.disabled = false;
+      goButton.textContent = "Move in";
+    }
+  });
+
+  function normalize(value) {
+    let url = String(value || "").trim().replace(/\/+$/, "");
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    return url;
+  }
+
+  function friendly(error) {
+    const message = String(error && error.message || error);
+    if (/abort|timeout/i.test(message)) return "No answer at that address. Check the spelling?";
+    if (/doesn't look like a cubby/.test(message)) return message;
+    return "Couldn't reach that cubby. Check the address and your connection.";
+  }
+</script>
+</body>
+</html>

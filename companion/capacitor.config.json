@@ -1,0 +1,12 @@
+{
+  "appId": "com.vibecubby.app",
+  "appName": "VibeCubby",
+  "webDir": "www",
+  "server": {
+    "allowNavigation": ["*"]
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#fff9ec"
+  }
+}

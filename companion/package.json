@@ -1,0 +1,23 @@
+{
+  "name": "vibecubby-companion",
+  "version": "0.1.0",
+  "description": "VibeCubby for iOS - your cubby, in your pocket. A native companion shell for self-hosted cubbies.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "sync": "cap sync",
+    "open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/preferences": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor/share": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  }
+}
