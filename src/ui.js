@@ -155,7 +155,18 @@ self.addEventListener("fetch", (event) => {
 `;
 }
 
-export function renderAppHtml(config, theme) {
+/* A simple letter tile in the app's accent color, used as the icon when an
+   individual app is installed to a phone's home screen. */
+export function appTileIcon(app) {
+  const accent = /^#[0-9a-f]{6}$/i.test(String(app.accent || "")) ? app.accent : "#315f4f";
+  const letter = esc(String(app.name || "A").trim().slice(0, 1).toUpperCase() || "A");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="${escAttr(app.name || "App")}">
+  <rect width="256" height="256" rx="56" fill="${accent}"/>
+  <text x="128" y="138" text-anchor="middle" dominant-baseline="middle" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="132" font-weight="800" fill="#ffffff">${letter}</text>
+</svg>`;
+}
+
+export function renderAppHtml(config, theme, manifestHref = "/manifest.webmanifest") {
   const name = esc(config.cubbyName);
   const tagline = esc(config.tagline);
   const mark = esc((config.cubbyName || "C").replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase() || "C");
@@ -169,7 +180,7 @@ export function renderAppHtml(config, theme) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="${escAttr(theme.themeColor)}">
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="manifest" href="${escAttr(manifestHref)}">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <title>${name}</title>
   <style>

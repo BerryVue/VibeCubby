@@ -2,6 +2,7 @@ export function createFakeD1() {
   const state = {
     apps: new Map(),
     items: new Map(),
+    pushDevices: new Map(),
   };
 
   return {
@@ -44,6 +45,13 @@ function queryRows(state, sql, params) {
   if (normalized.includes("from app_meta where id =")) {
     const row = state.apps.get(params[0]);
     return row && !row.deleted_at ? [row] : [];
+  }
+  if (normalized.includes("from app_meta where (slug =")) {
+    const row = active(state.apps).find((app) => app.slug === params[0] || app.path === params[1]);
+    return row ? [row] : [];
+  }
+  if (normalized.includes("select token from push_devices")) {
+    return [...state.pushDevices.values()];
   }
   if (normalized.includes("from grocery_items where id =")) {
     const row = state.items.get(params[0]);
@@ -115,6 +123,14 @@ function mutate(state, sql, params) {
       deleted_at: null,
     };
     state.items.set(row.id, row);
+    return;
+  }
+  if (normalized.includes("insert into push_devices")) {
+    state.pushDevices.set(params[0], { token: params[0], platform: params[1], created_at: params[2] });
+    return;
+  }
+  if (normalized.includes("delete from push_devices")) {
+    state.pushDevices.delete(params[0]);
     return;
   }
   if (normalized.includes("update app_meta set deleted_at")) {

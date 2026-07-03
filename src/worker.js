@@ -1,5 +1,5 @@
 import RAW_CONFIG from "../vibecubby.config.json" with { type: "json" };
-import { THEMES, appIcon, serviceWorkerSource, renderAppHtml } from "./ui.js";
+import { THEMES, appIcon, appTileIcon, serviceWorkerSource, renderAppHtml } from "./ui.js";
 
 const CONFIG = normalizeConfig(RAW_CONFIG);
 const THEME = THEMES[CONFIG.theme] || THEMES.hearth;
@@ -24,6 +24,9 @@ const DEFAULT_ITEMS = [
 const APP_ICON = appIcon(THEME);
 const SERVICE_WORKER = serviceWorkerSource();
 const APP_HTML = renderAppHtml(CONFIG, THEME);
+// The pantry page declares its own manifest, so "Add to Home Screen" there
+// installs Family Pantry as its own app tile instead of the whole shelf.
+const APP_HTML_PANTRY = renderAppHtml(CONFIG, THEME, "/pantry/manifest.webmanifest");
 
 function normalizeConfig(raw) {
   const input = raw && typeof raw === "object" ? raw : {};
@@ -74,8 +77,30 @@ export default {
         return new Response(null, { headers: corsHeaders() });
       }
 
-      if (url.pathname === "/" || url.pathname === "/pantry") {
+      if (url.pathname === "/") {
         return html(APP_HTML);
+      }
+      if (url.pathname === "/pantry") {
+        return html(APP_HTML_PANTRY);
+      }
+
+      // Per-app manifest + icon, so every app on the shelf can be installed
+      // to a phone home screen as its own tile. Served without auth (a
+      // manifest only exposes the app's name and color).
+      const appAssetMatch = url.pathname.match(/^\/([a-z0-9][a-z0-9-]*)\/(manifest\.webmanifest|icon\.svg)$/);
+      if (appAssetMatch && request.method === "GET") {
+        const slug = appAssetMatch[1];
+        await ensureDatabase(env);
+        const row = await first(
+          env,
+          "select * from app_meta where (slug = ? or path = ?) and deleted_at is null limit 1",
+          slug,
+          `/${slug}`,
+        );
+        if (!row) return json({ error: "Not found." }, 404);
+        const app = rowToApp(row);
+        if (appAssetMatch[2] === "icon.svg") return svg(appTileIcon(app));
+        return json(appManifest(app, url.origin, slug));
       }
       if (url.pathname === "/manifest.webmanifest") {
         return json(manifest(url.origin));
@@ -663,6 +688,21 @@ function securityHeaders() {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; manifest-src 'self'; base-uri 'self'; frame-ancestors 'none'",
+  };
+}
+
+function appManifest(app, origin, slug) {
+  return {
+    name: app.name,
+    short_name: app.name.slice(0, 20),
+    start_url: `${origin}/${slug}`,
+    scope: `${origin}/${slug}`,
+    display: "standalone",
+    background_color: THEME.background,
+    theme_color: app.accent,
+    icons: [
+      { src: `${origin}/${slug}/icon.svg`, sizes: "any", type: "image/svg+xml", purpose: "any maskable" },
+    ],
   };
 }
 

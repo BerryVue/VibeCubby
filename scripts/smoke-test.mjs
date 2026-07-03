@@ -68,6 +68,20 @@ const badPush = await request("/api/push/register", {
 });
 assert.equal(badPush.status, 400);
 
+// Per-app manifest + icon are public (no cookie) so phones can install apps.
+const pantryManifest = await request("/pantry/manifest.webmanifest");
+assert.equal(pantryManifest.status, 200);
+const pantryManifestBody = await pantryManifest.json();
+assert.equal(pantryManifestBody.name, "Family Pantry");
+assert.ok(pantryManifestBody.start_url.endsWith("/pantry"));
+
+const pantryIcon = await request("/pantry/icon.svg");
+assert.equal(pantryIcon.status, 200);
+assert.ok((await pantryIcon.text()).includes("<svg"));
+
+const missingManifest = await request("/nope-not-real/manifest.webmanifest");
+assert.equal(missingManifest.status, 404);
+
 console.log("Smoke test passed.");
 
 function request(path, init = {}) {

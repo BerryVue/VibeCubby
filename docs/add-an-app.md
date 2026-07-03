@@ -2,6 +2,13 @@
 
 The contract is simple: **any folder with an `index.html` is a publishable app.**
 
+Every app on the shelf automatically gets its own installable identity: the
+cubby serves `/<slug>/manifest.webmanifest` and `/<slug>/icon.svg` (a letter
+tile in the app's accent color), so "Add to Home Screen" on a phone installs
+*that app* with its own name and icon - not the whole shelf. Ship a real icon
+by adding a `<link rel="manifest">` of your own inside the app if you want to
+override it.
+
 ## The fast way (what agents use)
 
     npx vibecubby publish ./my-app --name "My App" --notes "what it does"
