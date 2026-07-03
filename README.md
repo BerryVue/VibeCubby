@@ -31,7 +31,7 @@ vibe coding: **publish → share → actually use.**
 
 Prereqs: a free [Cloudflare account](https://dash.cloudflare.com/sign-up), Node 18+.
 
-    git clone https://github.com/REPLACE_WITH_REPO/vibecubby my-cubby
+    git clone https://github.com/BerryVue/VibeCubby my-cubby
     cd my-cubby
     npm install
     npm run setup
