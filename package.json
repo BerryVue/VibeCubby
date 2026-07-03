@@ -2,7 +2,7 @@
   "name": "vibecubby",
   "version": "0.1.0",
   "description": "A self-hosted shelf for your homemade apps. Publish from any AI agent; runs on your own Cloudflare account.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
   "bin": {

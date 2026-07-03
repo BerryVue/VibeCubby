@@ -2,7 +2,7 @@
   "name": "vibecubby-companion",
   "version": "0.1.0",
   "description": "VibeCubby for iOS - your cubby, in your pocket. A native companion shell for self-hosted cubbies.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "private": true,
   "scripts": {
     "sync": "cap sync",

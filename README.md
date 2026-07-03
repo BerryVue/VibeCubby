@@ -100,6 +100,9 @@ more themes. Open an issue; the roadmap is a conversation.
 
 ## Contributing · License
 
-MIT. PRs welcome — especially themes. Be kind.
+AGPL-3.0 — free to use, self-host, and modify; if you run a modified version
+as a public service, share your changes back. The VibeCubby name and logo are
+not part of the code license (see [TRADEMARK.md](TRADEMARK.md)). PRs
+welcome — especially themes. Be kind.
 
 Made by [Jonathan Rosenberry](https://berryvuestudios.com) — filmmaker who fell into building.
