@@ -7,6 +7,7 @@
   },
   "ios": {
     "contentInset": "automatic",
-    "backgroundColor": "#fff9ec"
+    "backgroundColor": "#fff9ec",
+    "packageManager": "SPM"
   }
 }

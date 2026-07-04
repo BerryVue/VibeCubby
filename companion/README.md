@@ -43,6 +43,18 @@ process happens once, for this shell - never for individual cubby apps.
 ## Development notes
 
 - After changing `www/`: `npx cap sync ios`.
+- **No CocoaPods needed.** The iOS project uses Swift Package Manager
+  (`ios.packageManager: "SPM"` in `capacitor.config.json`, package manifest
+  in `ios/App/CapApp-SPM`). Heads-up if you ever regenerate the platform:
+  Capacitor CLI 7.6.x has a case-sensitivity bug where
+  `cap add ios --packagemanager SPM` still demands CocoaPods; work around it
+  with `CAPACITOR_COCOAPODS_PATH=/usr/bin/true npx cap add ios
+  --packagemanager SPM`, ignore the final "update ios" error, then run
+  `npx cap sync ios` (which detects SPM correctly and finishes the job).
+- Simulator build without an Apple account:
+  `xcodebuild -project ios/App/App.xcodeproj -scheme App
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+  CODE_SIGNING_ALLOWED=NO build`
 - Bundle id: `com.vibecubby.app` (change in `capacitor.config.json` AND in
   the relay's `APNS_TOPIC` var if you fork this).
 - App icon assets live in `ios/App/App/Assets.xcassets` - replace with the
